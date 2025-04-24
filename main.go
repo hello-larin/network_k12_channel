@@ -91,9 +91,7 @@ func decodeHamming(code []byte) ([]byte, error) {
 	// Проверяем наличие одиночной ошибки
 	if errorPosition > 0 && errorPosition <= 15 {
 		errorPosition -= 1 // Уменьшаем позицию на 1
-		fmt.Println("ERROR POSITION", errorPosition)
 		code[errorPosition] = 1 - code[errorPosition]
-		fmt.Println("NEW DATA", code)
 	}
 
 	// Извлекаем данные
@@ -116,19 +114,13 @@ func introduceErrors(code []byte) []byte {
 	// -- Вероятность двухкратной 25%
 	if randomGenerator.Float64() < 0.07 {
 		if randomGenerator.Float64() < 0.75 {
-			fmt.Println("UNTIL ERROR", code)
 			pos1 := randomGenerator.Intn(15)
 			code[pos1] = 1 - code[pos1]
-
-			fmt.Println("1 ERROR", pos1)
 		} else {
-			fmt.Println("UNTIL ERROR", code)
 			pos1 := randomGenerator.Intn(15)
 			pos2 := randomGenerator.Intn(15)
 			code[pos1] = 1 - code[pos1]
 			code[pos2] = 1 - code[pos2]
-
-			fmt.Println("2 ERRORS", pos1, pos2)
 		}
 	}
 	return code
@@ -187,15 +179,11 @@ func handleCode(w http.ResponseWriter, r *http.Request) {
 	// Кодирование
 	data := split(dataBits)
 
-	fmt.Println("DATA SPLIT ", data)
-
 	for i, value := range data {
 		// Кодирование Хэммингом
 		data[i] = encodeHamming(value)
 		// Внесение ошибки
-		data[i] = introduceErrors(data[i])
-		fmt.Println("WITH ERROR ", data[i])
-		// Декодирование
+		data[i] = introduceErrors(data[i]) // Декодирование
 		decoded, err := decodeHamming(data[i])
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -207,7 +195,8 @@ func handleCode(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	// Затем отправляем декодированный сегмент на localhost:8002/transfer
-	go sendToTransfer(segment, dataBits) // Используем горутину, чтобы не блокировать ответ клиенту
+	// Используем горутину, чтобы не блокировать ответ клиенту
+	go sendToTransfer(segment, dataBits)
 }
 
 // Функция для отправки данных на другой сервер
@@ -218,7 +207,6 @@ func sendToTransfer(segment Segment, dataBits []byte) {
 		// Делаем срез из 8 битов
 		block := make([]byte, 8)
 		copy(block, dataBits[i:])
-		fmt.Println("BLOCK", block)
 		byteValue := 128*block[0] + 64*block[1] + 32*block[2] + 16*block[3] + 8*block[4] + 4*block[5] + 2*block[6] + block[7]
 		decodedBytes = append(decodedBytes, byteValue)
 	}
