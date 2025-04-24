@@ -163,12 +163,14 @@ func handleCode(w http.ResponseWriter, r *http.Request) {
 	var segment Segment
 	err := json.NewDecoder(r.Body).Decode(&segment)
 	if err != nil {
+		fmt.Println("Invalid JSON format")
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
 
 	// Потяра кадра 1%
 	if randomGenerator.Float64() < 0.01 {
+		fmt.Println("Packet lost")
 		http.Error(w, "Packet lost", http.StatusInternalServerError)
 		return
 	}
@@ -186,6 +188,7 @@ func handleCode(w http.ResponseWriter, r *http.Request) {
 		data[i] = introduceErrors(data[i]) // Декодирование
 		decoded, err := decodeHamming(data[i])
 		if err != nil {
+			fmt.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -238,7 +241,7 @@ func sendToTransfer(segment Segment, dataBits []byte) {
 
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /serment/code", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /code", func(w http.ResponseWriter, r *http.Request) {
 		handleCode(w, r)
 	})
 	fmt.Println("SERVER STARTED")
