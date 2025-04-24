@@ -113,10 +113,11 @@ func introduceErrors(code []byte) []byte {
 	// -- Вероятность однократной 75%
 	// -- Вероятность двухкратной 25%
 	if randomGenerator.Float64() < 0.07 {
-		if randomGenerator.Float64() < 0.75 {
+		if randomGenerator.Float64() < 0.95 {
 			pos1 := randomGenerator.Intn(15)
 			code[pos1] = 1 - code[pos1]
 		} else {
+			fmt.Println("TWO ERROR")
 			pos1 := randomGenerator.Intn(15)
 			pos2 := randomGenerator.Intn(15)
 			code[pos1] = 1 - code[pos1]
@@ -130,12 +131,10 @@ func strToBinary(s string) []byte {
 	var b []byte
 
 	for _, c := range s {
-		r := []byte(string(c))
-		for _, v := range r {
-			for i := 7; i >= 0; i-- {
-				bit := (v >> uint(i)) & 1
-				b = append(b, byte(bit))
-			}
+		if c == '1' {
+			b = append(b, 1)
+		} else {
+			b = append(b, 0)
 		}
 	}
 
@@ -178,14 +177,13 @@ func handleCode(w http.ResponseWriter, r *http.Request) {
 	// Кодирование строки в массив битов
 	dataBits := strToBinary(segment.Segment)
 
-	// Кодирование
+	// Разбиение
 	data := split(dataBits)
 
 	for i, value := range data {
 		// Кодирование Хэммингом
 		data[i] = encodeHamming(value)
-		// Внесение ошибки
-		data[i] = introduceErrors(data[i]) // Декодирование
+		data[i] = introduceErrors(data[i])
 		decoded, err := decodeHamming(data[i])
 		if err != nil {
 			fmt.Println(err.Error())
