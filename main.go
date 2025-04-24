@@ -203,16 +203,15 @@ func handleCode(w http.ResponseWriter, r *http.Request) {
 // Функция для отправки данных на другой сервер
 func sendToTransfer(segment Segment, dataBits []byte) {
 	// Конвертируем биты обратно в строку
-	decodedBytes := make([]byte, 0, len(dataBits)/8)
-	for i := 0; i < len(dataBits); i += 8 {
-		// Делаем срез из 8 битов
-		block := make([]byte, 8)
-		copy(block, dataBits[i:])
-		byteValue := 128*block[0] + 64*block[1] + 32*block[2] + 16*block[3] + 8*block[4] + 4*block[5] + 2*block[6] + block[7]
-		decodedBytes = append(decodedBytes, byteValue)
+	for i, c := range dataBits {
+		if c == 1 {
+			dataBits[i] = '1'
+		} else {
+			dataBits[i] = '0'
+		}
 	}
 
-	segment.Segment = string(decodedBytes)
+	segment.Segment = string(dataBits)
 
 	jsonData, err := json.Marshal(segment)
 	if err != nil {
